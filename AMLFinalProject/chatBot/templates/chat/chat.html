@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot Simulation</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Chat with Bot</h1>
+    <div id="chatbox" style="border:1px solid #ccc; height:300px; overflow:auto; padding:10px;"></div>
+
+    <div class="container">
+        <input type="text" id="message" placeholder="Type your message...">
+        <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function lockInput(state) {
+            $("#message").prop("disabled", state);
+            $("#sendBtn").prop("disabled", state);
+        }
+
+        function sendMessage() {
+            let message = $('#message').val();
+            if (message.trim() === "") return;
+
+            $('#chatbox').append('<p><b>You:</b> ' + message + '</p>');
+            $('#message').val('');
+            
+            // Lock the input and button
+            lockInput(true);
+
+            // Simulate chatbot thinking
+            $('#chatbox').append('<p style="text-align: right;"><b>Chatbot:</b> thinking...</p>');
+            
+            setTimeout(function() {
+                // Replace 'thinking...' with hardcoded response
+                $('#chatbox').find('p:contains("thinking...")').last().html('<b>Chatbot:</b> This is a hardcoded response.').css('text-align', 'right');
+                lockInput(false);
+            }, 6000);
+        }
+
+        // Allow sending message with Enter key
+        $("#message").keypress(function(e) {
+            if (e.which === 13) {
+                sendMessage();
+            }
+        });
+    </script>
+
+    <style>
+        .container {
+          display: flex;
+          justify-content: center;
+          padding: 20px;
+        }
+      
+        #message {
+          flex: 1; /* Takes available space */
+          max-width: 800px;
+          min-width: 300px;
+          height: 50px;
+          padding: 10px;
+          font-size: 20px;
+          border: 2px solid #ccc;
+          border-radius: 10px;
+          box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</body>
+</html>

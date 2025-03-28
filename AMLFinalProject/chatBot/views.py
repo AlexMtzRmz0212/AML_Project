@@ -1,7 +1,12 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import JsonResponse
+import requests
 
-# Create your views here.
+def chat_view(request):
+    return render(request, 'chat/chat.html')
 
-def home(request):
-    return HttpResponse("Hello, world!")
+def api_call(request):
+    if request.method == "POST":
+        user_input = request.POST.get('message')
+        response = requests.post('https://api.example.com/chat', json={"message": user_input})
+        return JsonResponse(response.json())
