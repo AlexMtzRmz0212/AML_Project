@@ -3,6 +3,7 @@ import pandas as pd
 from typing import List, Dict, Union
 import pprint
 import ast
+import json
 
 # Base schema
 BASE_SCHEMA = {
@@ -168,5 +169,9 @@ if __name__ == "__main__":
     print(f"Total resumes loaded: {len(cleaned)}")
     
     n=2484+962
+    print(f"Resume {n} sample:\n")
     pprint.pprint(cleaned[n])
-    # print(data2.iloc[0])
+
+    output_path = "cleaned_resumes.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(cleaned, f, indent=2, ensure_ascii=False)
