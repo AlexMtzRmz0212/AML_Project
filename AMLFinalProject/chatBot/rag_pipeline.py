@@ -1,8 +1,8 @@
 import json
 import pandas as pd
 from tqdm import tqdm
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
 from langchain.chains import RetrievalQA
 from langchain_ollama.llms import OllamaLLM
@@ -33,7 +33,7 @@ vectorstore.persist()
 print("Embeddings generated and stored in Chroma DB using all‑MiniLM‑L6‑v2 HuggingFace Embeddings.")
 
 # Instantiate the Ollama LLM (ensure your local Ollama server is accessible at the provided base_url)
-llm = OllamaLLM(model="phi4", base_url="http://10.50.10.240:10023/")  
+llm = OllamaLLM(model="llama3.2", base_url="http://10.50.10.240:10023/")  
 
 # Create a RetrievalQA chain using the vectorstore as the retriever.
 qa_chain = RetrievalQA.from_chain_type(

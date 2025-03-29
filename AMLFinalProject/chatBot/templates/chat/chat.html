@@ -57,10 +57,16 @@
 
             $.ajax({
                 type: 'POST',
-                url: '/api/',
-                data: {
-                    message: message,
-                    csrfmiddlewaretoken: getCSRFToken()
+                url: 'api/chat/',
+                // data: {
+                //     message: message,
+                //     csrfmiddlewaretoken: getCSRFToken()
+                // },
+                data: JSON.stringify({            // Convert JS object to JSON string
+                    message: message
+                }),
+                headers: {                         // Send CSRF token in headers (Django requirement)
+                    'X-CSRFToken': getCSRFToken()
                 },
                 success: function(response) {
                     // Safely check if response contains expected data

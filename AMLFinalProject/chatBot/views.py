@@ -5,7 +5,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from fpdf import FPDF
 from io import BytesIO
-from docx import Document as DocxDocument
+# from docx import Document as DocxDocument
 from .rag_pipeline import qa_chain  # Import the QA chain set up in rag_pipeline.py
 
 def chat_view(request):
@@ -24,6 +24,10 @@ def home(request):
 @csrf_exempt
 def chat_response(request):
     if request.method == "POST":
+
+        if not request.body:
+            return JsonResponse({"error": "Empty request body"}, status=400)
+
         data = json.loads(request.body)
         user_query = data.get("message", "")
         
@@ -48,19 +52,19 @@ def chat_response(request):
             return response
         
         # Check if a Word document is requested
-        elif data.get("word"):
-            print("Generating Word document...")
-            doc = DocxDocument()
-            doc.add_paragraph(answer)
+        # elif data.get("word"):
+        #     print("Generating Word document...")
+        #     doc = DocxDocument()
+        #     doc.add_paragraph(answer)
             
-            word_buffer = BytesIO()
-            doc.save(word_buffer)
-            word_data = word_buffer.getvalue()
+        #     word_buffer = BytesIO()
+        #     doc.save(word_buffer)
+        #     word_data = word_buffer.getvalue()
             
-            response = HttpResponse(word_data, content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-            response["Content-Disposition"] = 'attachment; filename="response.docx"'
-            print("Word document generated!")
-            return response
+        #     response = HttpResponse(word_data, content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        #     response["Content-Disposition"] = 'attachment; filename="response.docx"'
+        #     print("Word document generated!")
+        #     return response
         
         # Default: return JSON response
         return JsonResponse({"response": answer})
