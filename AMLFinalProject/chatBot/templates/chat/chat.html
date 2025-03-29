@@ -6,64 +6,131 @@
 </head>
 <body>
     <h1>Chat with Bot</h1>
-    <div id="chatbox" style="border:1px solid #ccc; height:300px; overflow:auto; padding:10px;"></div>
 
-    <div class="container">
-        <input type="text" id="message" placeholder="Type your message...">
-        <button id="sendBtn" onclick="sendMessage()">Send</button>
+    <div class="tab-container">
+        <button class="tab-button" onclick="showTab('tab1')">Tab 1</button>
+        <button class="tab-button" onclick="showTab('tab2')">Tab 2</button>
     </div>
 
+    <div id="tab1" class="tab-content">
+        <h2>Lorem ipsum</h2>
+        <div id="chatbox1" style="border:1px solid #ccc; height:300px; overflow:auto; padding:10px;"></div>
+        <div class="container">
+            <input type="text" id="message1" placeholder="Type your message...">
+            <button id="sendBtn1" onclick="sendMessage('1')">Send</button>
+        </div>
+    </div>
+
+    <div id="tab2" class="tab-content" style="display:none;">
+        <h2>Generate Resume</h2>
+        <div id="chatbox2" style="border:1px solid #ccc; height:300px; overflow:auto; padding:10px;"></div>
+        <div class="container">
+            <input type="text" id="message2" placeholder="Type your message...">
+            <button id="sendBtn2" onclick="sendMessage('2')">Send</button>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+    </form>
+
     <script>
-        function lockInput(state) {
-            $("#message").prop("disabled", state);
-            $("#sendBtn").prop("disabled", state);
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
         }
 
-        function sendMessage() {
-            let message = $('#message').val();
-            if (message.trim() === "") return;
+        function lockInput(tabId, state) {
+            $(`#message${tabId}`).prop("disabled", state);
+            $(`#sendBtn${tabId}`).prop("disabled", state);
+        }
 
-            $('#chatbox').append('<p><b>You:</b> ' + message + '</p>');
-            $('#message').val('');
-            
-            // Lock the input and button
-            lockInput(true);
+        function sendMessage(tabId) {
+            let message = $(`#message${tabId}`).val().trim();
+            if (message === "") return;
 
-            // Simulate chatbot thinking
-            $('#chatbox').append('<p style="text-align: right;"><b>Chatbot:</b> thinking...</p>');
-            
-            setTimeout(function() {
-                // Replace 'thinking...' with hardcoded response
-                $('#chatbox').find('p:contains("thinking...")').last().html('<b>Chatbot:</b> This is a hardcoded response.').css('text-align', 'right');
-                lockInput(false);
-            }, 6000);
+            $(`#chatbox${tabId}`).append(`<p><b>You:</b> ${message}</p>`);
+            $(`#message${tabId}`).val('');
+            lockInput(tabId, true);
+
+            let thinkingMessage = $(`<p style="text-align: right;"><b>Chatbot:</b> thinking...</p>`);
+            $(`#chatbox${tabId}`).append(thinkingMessage);
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/',
+                data: {
+                    message: message,
+                    csrfmiddlewaretoken: getCSRFToken()
+                },
+                success: function(response) {
+                    // Safely check if response contains expected data
+                    let botReply = response.response ? response.response : "I couldn't understand that.";
+                    thinkingMessage.html(`<b>Chatbot:</b> ${botReply}`).css('text-align', 'right');
+                },
+                error: function(xhr, status, error) {
+                    thinkingMessage.html(`<b>Chatbot:</b> Error: ${xhr.statusText || 'Something went wrong.'}`).css('text-align', 'right');
+                },
+                complete: function() {
+                    // Always unlock input after AJAX is done
+                    lockInput(tabId, false);
+                }
+            });
+        }
+
+        function showTab(tabId) {
+            $('.tab-content').hide();
+            $(`#${tabId}`).show();
         }
 
         // Allow sending message with Enter key
-        $("#message").keypress(function(e) {
+        $(document).on("keypress", "#message1, #message2", function(e) {
             if (e.which === 13) {
-                sendMessage();
+                sendMessage(this.id.slice(-1));
             }
         });
     </script>
 
     <style>
         .container {
-          display: flex;
-          justify-content: center;
-          padding: 20px;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
         }
-      
-        #message {
-          flex: 1; /* Takes available space */
-          max-width: 800px;
-          min-width: 300px;
-          height: 50px;
-          padding: 10px;
-          font-size: 20px;
-          border: 2px solid #ccc;
-          border-radius: 10px;
-          box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+
+        #message1, #message2 {
+            flex: 1;
+            max-width: 800px;
+            min-width: 300px;
+            height: 50px;
+            padding: 10px;
+            font-size: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+
+        .tab-button:hover {
+            background-color: #ddd;
+        }
+
+        .tab-content {
+            display: none;
         }
     </style>
 </body>
