@@ -5,7 +5,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from fpdf import FPDF
 from io import BytesIO
-# from docx import Document as DocxDocument
+# # from docx import Document as DocxDocument
 from .rag_pipeline import qa_chain  # Import the QA chain set up in rag_pipeline.py
 
 def chat_view(request):
@@ -24,6 +24,10 @@ def home(request):
 @csrf_exempt
 def chat_response(request):
     if request.method == "POST":
+
+        if not request.body:
+            return JsonResponse({"error": "Empty request body"}, status=400)
+
         data = json.loads(request.body)
 
         if not request.body:
