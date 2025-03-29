@@ -95,10 +95,10 @@ if __name__ == "__main__":
     print(f"Total resumes loaded: {len(normalized_resumes)}")
 
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     n=2484+962
     pprint.pprint(normalized_resumes[n])
-    print(data2.iloc[0])
+    # print(data2.iloc[0])
 
 

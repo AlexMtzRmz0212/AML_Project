@@ -107,8 +107,7 @@ if __name__ == "__main__":
     resumes = process_datasets(resume_files)
 
     print(f"Total resumes loaded: {len(resumes)}")
-    input("Press Enter to continue...")
     
     n=2484+962
     pprint.pprint(resumes[n])
-    print(data2.iloc[0])
+    # print(data2.iloc[0])
