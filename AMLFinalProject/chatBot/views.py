@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import requests
 from django.http import HttpResponse, JsonResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -7,8 +8,15 @@ from io import BytesIO
 from docx import Document as DocxDocument
 from .rag_pipeline import qa_chain  # Import the QA chain set up in rag_pipeline.py
 
+def chat_view(request):
+    return render(request, 'chat/chat.html')
 
-# Create your views here.
+def api_call(request):
+    if request.method == "POST":
+        user_input = request.POST.get('message')
+        # response = requests.post('https://api.example.com/chat', json={"message": user_input})        
+        # return JsonResponse(response.json())
+        return JsonResponse({"response": "This is a hardcoded response for testing"})
 
 def home(request):
     return HttpResponse("Hello, world!")
