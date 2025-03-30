@@ -194,26 +194,21 @@
             nameInput.removeClass('highlight-missing');
 
             let hasError = false;
-
             if (!jobdesc) {
                 jobdescInput.addClass('highlight-missing');
                 hasError = true;
             }
-
             if (!name) {
                 nameInput.addClass('highlight-missing');
                 alert("No worries! We don't use your name for anything. It's only to personalize your resume preview.");
                 hasError = true;
             }
-
             if (hasError) return;
 
             const userInputFormatted = `Name: ${name}\nEducation: ${education}\nExperience:\n${experiences.join("\n")}\nJob Description:\n${jobdesc}`;
             $('#user-input-preview').text(userInputFormatted);
-
             const fullMessage = `Education: ${education}\nExperience: ${experiences.join("\n")}\nJob Description: ${jobdesc}`;
             sendMessage('2', fullMessage, education, experiences);
-
             $('#step1').removeClass('active-section');
             $('#step2').addClass('active-section');
         }
@@ -229,7 +224,6 @@
             $('#step2').removeClass('active-section');
             $('#step1').addClass('active-section');
         }
-
         $('input[name="action"]').on('change', function () {
             const value = $(this).val();
             
@@ -257,7 +251,6 @@
 
             $('#regenerate-instructions').val('');
         }
-
         function getCSRFToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
         }
