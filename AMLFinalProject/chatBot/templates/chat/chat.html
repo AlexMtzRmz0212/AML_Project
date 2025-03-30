@@ -3,6 +3,7 @@
 <head>
     <title>Resume Chatbot</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -149,7 +150,7 @@
         </div>
 
         <div id="generate-pdf-btn">
-            <button class="btn">Generate PDF</button>
+            <button class="btn" onclick="generatePDF()">Generate PDF</button>
         </div>
 
         <div id="regenerate-box">
@@ -168,6 +169,25 @@
                     <input type="text" class="experience-input" placeholder="Experience ${experienceCount}">
                 </div>
             `);
+        }
+
+        
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            let content = $('#llm-response-box').html(); // Get content with formatting
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.text("Generated Resume", 10, 10);
+            
+            // Convert HTML to plain text, preserving line breaks
+            let text = content.replace(/<br\s*\/?>/gi, "\n"); 
+
+            doc.text(text, 10, 20, { maxWidth: 180 }); // Wrap text within PDF page width
+
+            doc.save("resume.pdf"); // Download PDF
         }
 
         function submitJobDesc() {
