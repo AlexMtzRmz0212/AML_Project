@@ -212,7 +212,7 @@
             $('#user-input-preview').text(userInputFormatted);
 
             const fullMessage = `Education: ${education}\nExperience: ${experiences.join("\n")}\nJob Description: ${jobdesc}`;
-            sendMessage('2', fullMessage);
+            sendMessage('2', fullMessage, education, experiences);
 
             $('#step1').removeClass('active-section');
             $('#step2').addClass('active-section');
@@ -267,47 +267,68 @@
             $(`#sendBtn${tabId}`).prop("disabled", state);
         }
 
-        function sendMessage(tabId, message = null) {
+        function sendMessage(tabId, message = null, education = null, experiences = null) {
             let msg = message || $(`#message${tabId}`).val().trim();
             if (msg === "") return;
 
             const action = $('input[name="action"]:checked').val();
+            
             let customPrompt = "";
 
-            if (action === "pdf") {
-                customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
-        Return ONLY the final resume — no explanations or extra text.
+            // if (action === "pdf") {
+            //     customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
+            //     Return ONLY the final resume — no explanations or extra text.
 
-        Use this format:
+            //     Use this format:
 
-        ========================
-        Name: [Full Name]
-        Education:
-        - [Degree, School, Year]
+            //     ========================
+            //     Name: [Full Name]
+            //     Education:
+            //     - [Degree, School, Year]
 
-        Experience:
-        - [Job Title, Company, Dates]
-        [Responsibilities]
+            //     Experience:
+            //     - [Job Title, Company, Dates]
+            //     [Responsibilities]
 
-        Skills:
-        - [Skill 1], [Skill 2], [Skill 3]
-        ========================
+            //     Skills:
+            //     - [Skill 1], [Skill 2], [Skill 3]
+            //     ========================
 
-        Resume data:
-        ${msg}`;
-            } else if (action === "edit") {
+            //     Resume data:
+            //     ${msg}`;
+            // } 
+            
+            if (action === "edit") {
                 customPrompt = `Improve the following resume content. Only return the updated resume. Do NOT include any extra comments or summaries.
 
-        Resume data:
-        ${msg}`;
+                Resume data:
+                ${msg}`;
             } else if (action === "regenerate") {
                 customPrompt = `Regenerate the following resume with a clearer layout, improved professional language, and consistent formatting. Only output the resume content.
 
-        Resume data:
-        ${msg}`;
+                Resume data:
+                ${msg}`;
             } else {
-                customPrompt = msg; // fallback
-            }
+                customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
+                    Return ONLY the final resume — no explanations or extra text. Focus on skills and resume according to the education and experience
+                    Keep the information of education and experience as it is, do not change.
+
+                    Use this format:
+
+                    
+                    Education:
+                    - ${education}
+
+                    Experience:
+                    - ${experiences}
+
+                    Skills:
+                    - [Skill 1], [Skill 2], [Skill 3]
+                    ========================
+
+                    Resume data:
+                    ${msg}`; // fallback
+                }
 
             let thinkingMessage = $("<p><b>Chatbot:</b> thinking...</p>");
             $('#llm-response-box').html(thinkingMessage);
@@ -321,6 +342,7 @@
                 },
                 success: function(response) {
                     let botReply = response.response ? response.response : "I couldn't understand that.";
+                    botReply = `Education: ${education}\nExperience: ${experiences.join("\n")}\n` + botReply;
                     $('#llm-response-box').html(botReply);
                 },
                 error: function(xhr) {
