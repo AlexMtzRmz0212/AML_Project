@@ -4,6 +4,7 @@
     <title>Job Description Drop</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        /* (Your original styles unchanged) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -11,20 +12,10 @@
             background: #f4f7fa;
             color: #333;
         }
-        .section {
-            display: none;
-        }
-        .active-section {
-            display: block;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
+        .section { display: none; }
+        .active-section { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
         input, textarea {
             width: 100%;
             padding: 12px;
@@ -36,9 +27,7 @@
             border-color: #4facfe;
             outline: none;
         }
-        .experience-group {
-            margin-bottom: 10px;
-        }
+        .experience-group { margin-bottom: 10px; }
         .word-style-box {
             width: 800px;
             max-width: 100%;
@@ -50,36 +39,9 @@
             line-height: 1.6;
             border-radius: 10px;
         }
-        .radio-options {
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-        .radio-options label {
-            background: #fff;
-            border: 2px solid #4facfe;
-            padding: 10px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .radio-options input[type="radio"] {
-            accent-color: #4facfe;
-        }
-        .radio-options label:hover {
-            background-color: #4facfe;
-            color: white;
-        }
-        .regenerate-box, #generate-pdf-btn {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
+        .highlight-missing {
+            border: 2px solid red !important;
+            background-color: #ffe6e6;
         }
         .btn {
             padding: 12px 28px;
@@ -94,25 +56,6 @@
         }
         .btn:hover {
             background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
-        }
-        .highlight-missing {
-            border: 2px solid red !important;
-            background-color: #ffe6e6;
-        }
-        #user-input-preview, #llm-response-box {
-            white-space: pre-wrap;
-            background: #fff;
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-        }
-        #user-input-preview {
-            contenteditable: true;
-        }
-        #llm-response-box[contenteditable="true"] {
-            outline: none;
-            border-color: #4facfe;
         }
     </style>
 </head>
@@ -153,21 +96,6 @@
 
         <h2>LLM Response</h2>
         <div id="llm-response-box" class="word-style-box" contenteditable="false"></div>
-
-        <div class="radio-options">
-            <label><input type="radio" name="action" value="pdf"> Generate PDF</label>
-            <label><input type="radio" name="action" value="edit"> Edit</label>
-            <label><input type="radio" name="action" value="regenerate"> Regenerate</label>
-        </div>
-
-        <div id="generate-pdf-btn">
-            <button class="btn">Generate PDF</button>
-        </div>
-
-        <div id="regenerate-box">
-            <textarea id="regenerate-instructions" rows="4" placeholder="Describe what you'd like changed..."></textarea>
-            <button class="btn" onclick="handleRegenerate()">Submit Changes</button>
-        </div>
     </div>
 
     <script>
@@ -194,28 +122,24 @@
             nameInput.removeClass('highlight-missing');
 
             let hasError = false;
-
             if (!jobdesc) {
                 jobdescInput.addClass('highlight-missing');
                 hasError = true;
             }
-
             if (!name) {
                 nameInput.addClass('highlight-missing');
                 alert("No worries! We don't use your name for anything. It's only to personalize your resume preview.");
                 hasError = true;
             }
-
             if (hasError) return;
 
             const userInputFormatted = `Name: ${name}\nEducation: ${education}\nExperience:\n${experiences.join("\n")}\nJob Description:\n${jobdesc}`;
             $('#user-input-preview').text(userInputFormatted);
 
-            const fullMessage = `Education: ${education}\nExperience: ${experiences.join("\n")}\nJob Description: ${jobdesc}`;
-            sendMessage('2', fullMessage, education, experiences);
-
             $('#step1').removeClass('active-section');
             $('#step2').addClass('active-section');
+
+            generateResumeChunks(jobdesc, experiences);
         }
 
         function confirmGoToStep1() {
@@ -230,128 +154,46 @@
             $('#step1').addClass('active-section');
         }
 
-        $('input[name="action"]').on('change', function () {
-            const value = $(this).val();
-            
-            if (value === 'pdf') {
-                $('#generate-pdf-btn').show();
-                $('#llm-response-box').attr('contenteditable', false);
-                $('#regenerate-box').hide();
-            } else if (value === 'edit') {
-                $('#generate-pdf-btn').hide();
-                $('#llm-response-box').attr('contenteditable', true);
-                $('#regenerate-box').hide();
-            } else if (value === 'regenerate') {
-                $('#generate-pdf-btn').hide();
-                $('#llm-response-box').attr('contenteditable', false);
-                $('#regenerate-box').show();
-            }
-        });
-
-        function handleRegenerate() {
-            const instructions = $('#regenerate-instructions').val();
-            const originalText = $('#llm-response-box').text();
-
-            const regenerateMessage = `Please modify the following resume based on these instructions: ${instructions}\n\n${originalText}`;
-            sendMessage('2', regenerateMessage);
-
-            $('#regenerate-instructions').val('');
-        }
-
         function getCSRFToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
         }
 
-        function lockInput(tabId, state) {
-            $(`#message${tabId}`).prop("disabled", state);
-            $(`#sendBtn${tabId}`).prop("disabled", state);
+        function sendLLMMessage(prompt) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: 'POST',
+                    url: 'api/chat/',
+                    data: JSON.stringify({ message: prompt }),
+                    headers: { 'X-CSRFToken': getCSRFToken() },
+                    success: function (response) {
+                        resolve(response.response || "No response.");
+                    },
+                    error: function (xhr) {
+                        reject(xhr.statusText || 'Something went wrong.');
+                    }
+                });
+            });
         }
 
-        function sendMessage(tabId, message = null, education = null, experiences = null) {
-            let msg = message || $(`#message${tabId}`).val().trim();
-            if (msg === "") return;
+        async function generateResumeChunks(jobdesc, experiences) {
+            $('#llm-response-box').html("<em>Working on it...</em>");
 
-            const action = $('input[name="action"]:checked').val();
-            
-            let customPrompt = "";
+            try {
+                const skillsPrompt = `Give me a set of skills for this job description: "${jobdesc}" considering the following experience(s): ${experiences.join(", ")}`;
+                const skillsResponse = await sendLLMMessage(skillsPrompt);
 
-            // if (action === "pdf") {
-            //     customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
-            //     Return ONLY the final resume — no explanations or extra text.
+                let htmlOutput = `<strong>Skills:</strong><br>${skillsResponse}`;
 
-            //     Use this format:
-
-            //     ========================
-            //     Name: [Full Name]
-            //     Education:
-            //     - [Degree, School, Year]
-
-            //     Experience:
-            //     - [Job Title, Company, Dates]
-            //     [Responsibilities]
-
-            //     Skills:
-            //     - [Skill 1], [Skill 2], [Skill 3]
-            //     ========================
-
-            //     Resume data:
-            //     ${msg}`;
-            // } 
-            
-            if (action === "edit") {
-                customPrompt = `Improve the following resume content. Only return the updated resume. Do NOT include any extra comments or summaries.
-
-                Resume data:
-                ${msg}`;
-            } else if (action === "regenerate") {
-                customPrompt = `Regenerate the following resume with a clearer layout, improved professional language, and consistent formatting. Only output the resume content.
-
-                Resume data:
-                ${msg}`;
-            } else {
-                customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
-                    Return ONLY the final resume — no explanations or extra text. Focus on skills and resume according to the education and experience
-                    Keep the information of education and experience as it is, do not change.
-
-                    Use this format:
-
-                    
-                    Education:
-                    - ${education}
-
-                    Experience:
-                    - ${experiences}
-
-                    Skills:
-                    - [Skill 1], [Skill 2], [Skill 3]
-                    ========================
-
-                    Resume data:
-                    ${msg}`; // fallback
+                for (let i = 0; i < experiences.length; i++) {
+                    const expPrompt = `Create 2 lines of description for this experience: "${experiences[i]}"`;
+                    const expResponse = await sendLLMMessage(expPrompt);
+                    htmlOutput += `<br><br><strong>Exp${i + 1}:</strong><br>${expResponse}`;
                 }
 
-            let thinkingMessage = $("<p><b>Chatbot:</b> thinking...</p>");
-            $('#llm-response-box').html(thinkingMessage);
-
-            $.ajax({
-                type: 'POST',
-                url: 'api/chat/',
-                data: JSON.stringify({ message: customPrompt }),
-                headers: {
-                    'X-CSRFToken': getCSRFToken()
-                },
-                success: function(response) {
-                    let botReply = response.response ? response.response : "I couldn't understand that.";
-                    botReply = `Education: ${education}\nExperience: ${experiences.join("\n")}\n` + botReply;
-                    $('#llm-response-box').html(botReply);
-                },
-                error: function(xhr) {
-                    $('#llm-response-box').html(`<b>Chatbot:</b> Error: ${xhr.statusText || 'Something went wrong.'}`);
-                },
-                complete: function() {
-                    lockInput(tabId, false);
-                }
-            });
+                $('#llm-response-box').html(htmlOutput);
+            } catch (err) {
+                $('#llm-response-box').html(`<b>Error:</b> ${err}`);
+            }
         }
     </script>
 </body>

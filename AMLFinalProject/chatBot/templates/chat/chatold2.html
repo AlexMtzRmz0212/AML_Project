@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Description Drop</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f4f7fa;
+            color: #333;
+        }
+        .section {
+            display: none;
+        }
+        .active-section {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            border-color: #4facfe;
+            outline: none;
+        }
+        .experience-group {
+            margin-bottom: 10px;
+        }
+        .word-style-box {
+            width: 800px;
+            max-width: 100%;
+            margin: 30px auto;
+            background: white;
+            padding: 40px;
+            border: 1px solid #ccc;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            line-height: 1.6;
+            border-radius: 10px;
+        }
+        .radio-options {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .radio-options label {
+            background: #fff;
+            border: 2px solid #4facfe;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .radio-options input[type="radio"] {
+            accent-color: #4facfe;
+        }
+        .radio-options label:hover {
+            background-color: #4facfe;
+            color: white;
+        }
+        .regenerate-box, #generate-pdf-btn {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
+        }
+        .btn:hover {
+            background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+        }
+        .highlight-missing {
+            border: 2px solid red !important;
+            background-color: #ffe6e6;
+        }
+        #user-input-preview, #llm-response-box {
+            white-space: pre-wrap;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+        #user-input-preview {
+            contenteditable: true;
+        }
+        #llm-response-box[contenteditable="true"] {
+            outline: none;
+            border-color: #4facfe;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="step1" class="section active-section">
+        <h1>Job Description Drop</h1>
+        <p>Drop the job description you've found here:</p>
+        <div class="form-group">
+            <label for="jobdesc">Job Description</label>
+            <textarea id="jobdesc" rows="6"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name">
+        </div>
+        <div id="experience-wrapper">
+            <label>Experience</label>
+            <div class="experience-group">
+                <input type="text" class="experience-input" placeholder="Experience 1">
+            </div>
+        </div>
+        <button class="btn" onclick="addExperience()">Add More Experience</button>
+
+        <div class="form-group">
+            <label for="education">Education</label>
+            <input type="text" id="education">
+        </div>
+
+        <button class="btn" onclick="submitJobDesc()">Submit</button>
+    </div>
+
+    <div id="step2" class="section">
+        <button class="btn" onclick="confirmGoToStep1()">Submit a new job description</button>
+
+        <h2>Your Input</h2>
+        <div id="user-input-preview" class="word-style-box" contenteditable="true"></div>
+
+        <h2>LLM Response</h2>
+        <div id="llm-response-box" class="word-style-box" contenteditable="false"></div>
+
+        <div class="radio-options">
+            <label><input type="radio" name="action" value="pdf"> Generate PDF</label>
+            <label><input type="radio" name="action" value="edit"> Edit</label>
+            <label><input type="radio" name="action" value="regenerate"> Regenerate</label>
+        </div>
+
+        <div id="generate-pdf-btn">
+            <button class="btn">Generate PDF</button>
+        </div>
+
+        <div id="regenerate-box">
+            <textarea id="regenerate-instructions" rows="4" placeholder="Describe what you'd like changed..."></textarea>
+            <button class="btn" onclick="handleRegenerate()">Submit Changes</button>
+        </div>
+    </div>
+
+    <script>
+        let experienceCount = 1;
+
+        function addExperience() {
+            experienceCount++;
+            $('#experience-wrapper').append(`
+                <div class="experience-group">
+                    <input type="text" class="experience-input" placeholder="Experience ${experienceCount}">
+                </div>
+            `);
+        }
+
+        function submitJobDesc() {
+            const jobdescInput = $('#jobdesc');
+            const nameInput = $('#name');
+            const jobdesc = jobdescInput.val().trim();
+            const name = nameInput.val().trim();
+            const education = $('#education').val();
+            const experiences = $('.experience-input').map(function () { return $(this).val(); }).get();
+
+            jobdescInput.removeClass('highlight-missing');
+            nameInput.removeClass('highlight-missing');
+
+            let hasError = false;
+
+            if (!jobdesc) {
+                jobdescInput.addClass('highlight-missing');
+                hasError = true;
+            }
+
+            if (!name) {
+                nameInput.addClass('highlight-missing');
+                alert("No worries! We don't use your name for anything. It's only to personalize your resume preview.");
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            const userInputFormatted = `Name: ${name}\nEducation: ${education}\nExperience:\n${experiences.join("\n")}\nJob Description:\n${jobdesc}`;
+            $('#user-input-preview').text(userInputFormatted);
+
+            const fullMessage = `Education: ${education}\nExperience: ${experiences.join("\n")}\nJob Description: ${jobdesc}`;
+            sendMessage('2', fullMessage, education, experiences);
+
+            $('#step1').removeClass('active-section');
+            $('#step2').addClass('active-section');
+        }
+
+        function confirmGoToStep1() {
+            const confirmed = confirm("Are you sure you want to submit a new job description? All progress will be lost.");
+            if (confirmed) {
+                goToStep1();
+            }
+        }
+
+        function goToStep1() {
+            $('#step2').removeClass('active-section');
+            $('#step1').addClass('active-section');
+        }
+
+        $('input[name="action"]').on('change', function () {
+            const value = $(this).val();
+            
+            if (value === 'pdf') {
+                $('#generate-pdf-btn').show();
+                $('#llm-response-box').attr('contenteditable', false);
+                $('#regenerate-box').hide();
+            } else if (value === 'edit') {
+                $('#generate-pdf-btn').hide();
+                $('#llm-response-box').attr('contenteditable', true);
+                $('#regenerate-box').hide();
+            } else if (value === 'regenerate') {
+                $('#generate-pdf-btn').hide();
+                $('#llm-response-box').attr('contenteditable', false);
+                $('#regenerate-box').show();
+            }
+        });
+
+        function handleRegenerate() {
+            const instructions = $('#regenerate-instructions').val();
+            const originalText = $('#llm-response-box').text();
+
+            const regenerateMessage = `Please modify the following resume based on these instructions: ${instructions}\n\n${originalText}`;
+            sendMessage('2', regenerateMessage);
+
+            $('#regenerate-instructions').val('');
+        }
+
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        }
+
+        function lockInput(tabId, state) {
+            $(`#message${tabId}`).prop("disabled", state);
+            $(`#sendBtn${tabId}`).prop("disabled", state);
+        }
+
+        function sendMessage(tabId, message = null, education = null, experiences = null) {
+            let msg = message || $(`#message${tabId}`).val().trim();
+            if (msg === "") return;
+
+            const action = $('input[name="action"]:checked').val();
+            
+            let customPrompt = "";
+
+            // if (action === "pdf") {
+            //     customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
+            //     Return ONLY the final resume — no explanations or extra text.
+
+            //     Use this format:
+
+            //     ========================
+            //     Name: [Full Name]
+            //     Education:
+            //     - [Degree, School, Year]
+
+            //     Experience:
+            //     - [Job Title, Company, Dates]
+            //     [Responsibilities]
+
+            //     Skills:
+            //     - [Skill 1], [Skill 2], [Skill 3]
+            //     ========================
+
+            //     Resume data:
+            //     ${msg}`;
+            // } 
+            
+            if (action === "edit") {
+                customPrompt = `Improve the following resume content. Only return the updated resume. Do NOT include any extra comments or summaries.
+
+                Resume data:
+                ${msg}`;
+            } else if (action === "regenerate") {
+                customPrompt = `Regenerate the following resume with a clearer layout, improved professional language, and consistent formatting. Only output the resume content.
+
+                Resume data:
+                ${msg}`;
+            } else {
+                customPrompt = `You are a professional resume writer. Format the following information into a polished resume. 
+                    Return ONLY the final resume — no explanations or extra text. Focus on skills and resume according to the education and experience
+                    Keep the information of education and experience as it is, do not change.
+
+                    Use this format:
+
+                    Skills:
+                    - [Skill 1], [Skill 2], [Skill 3]
+                    
+                    Resume data:
+                    ${msg}`; // fallback
+                }
+
+            let thinkingMessage = $("<p><b>Chatbot:</b> thinking...</p>");
+            $('#llm-response-box').html(thinkingMessage);
+
+            $.ajax({
+                type: 'POST',
+                url: 'api/chat/',
+                data: JSON.stringify({ message: customPrompt }),
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                },
+                success: function(response) {
+                    let botReply = response.response ? response.response : "I couldn't understand that.";
+                    botReply = `Education: ${education}\nExperience: ${experiences.join("\n")}\n` + botReply;
+                    $('#llm-response-box').html(botReply);
+                },
+                error: function(xhr) {
+                    $('#llm-response-box').html(`<b>Chatbot:</b> Error: ${xhr.statusText || 'Something went wrong.'}`);
+                },
+                complete: function() {
+                    lockInput(tabId, false);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
