@@ -182,16 +182,15 @@
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
-            doc.text("Generated Resume", 10, 10);
             
             // Convert HTML to plain text, preserving line breaks
             let text = content.replace(/<br\s*\/?>/gi, "\n");
              
 
-            text = `${name}\n\nEducation: ${education}\n${text}`;
+            text = `${name}\n\nEducation\n ${education}\n${text}\n\n`;
             doc.text(text, 10, 20, { maxWidth: 180 }); // Wrap text within PDF page width
 
-            doc.save("resume.pdf"); // Download PDF
+            doc.save("Generated Resume.pdf"); // Download PDF
         }
 
         function submitJobDesc() {
@@ -268,7 +267,7 @@
                 const skillsPrompt = `Give me a set of skills for this job description: "${jobdesc}" considering the following experience(s): ${experiences.join(", ")}`;
                 const skillsResponse = await sendLLMMessage(skillsPrompt);
 
-                let htmlOutput = `Skills:<br>${skillsResponse}`;
+                let htmlOutput = `Skills<br>${skillsResponse}`;
 
                 for (let i = 0; i < experiences.length; i++) {
                     const expPrompt = `Generate exactly 2 lines of description for the following experience: '${experiences[i]}'. Return only the description, with no extra text or conversation.`;
